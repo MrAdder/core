@@ -128,6 +128,21 @@ Route::group([
     Route::get('/destroy')->uses('Registration@destroy')->name('destroy');
 });
 
+Route::group([
+    'as' => 'events_roster.',
+    'prefix' => 'events',
+    'namespace' => 'Events',
+    'middleware' => 'auth_full_group',
+], function () {
+    Route::get('/', 'EventsRosterController@index')->name('index'); // List all event rosters
+    Route::get('/create', 'EventsRosterController@create')->name('create'); // Show form to create a new event roster
+    Route::post('/store', 'EventsRosterController@store')->name('store'); // Store a new event roster
+    Route::get('/{id}', 'EventsRosterController@show')->name('show'); // Show a specific event roster
+    Route::get('/{id}/edit', 'EventsRosterController@edit')->name('edit'); // Show form to edit an event roster
+    Route::put('/{id}', 'EventsRosterController@update')->name('updateRoster'); // Update an event roster
+    Route::delete('/{id}', 'EventsRosterController@destroy')->name('destroy'); // Delete an event roster
+});
+
 // UKCP
 Route::group([
     'as' => 'ukcp.',
