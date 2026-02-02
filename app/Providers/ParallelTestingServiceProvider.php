@@ -20,7 +20,5 @@ class ParallelTestingServiceProvider extends ServiceProvider
             Artisan::call('db:seed', ['--no-interaction' => true]);
             Artisan::call('cts:migrate:fresh', ['--force' => true, '--no-interaction' => true]);
         });
-        
     }
-
 }
