@@ -68,10 +68,13 @@ abstract class TestCase extends BaseTestCase
         }
 
         $this->user = Account::factory()->withQualification()->createQuietly();
+
+        $memberRoleId = Role::findByName('member', 'web')->id;
+
         DB::table('mship_account_role')->insert([
             'model_type' => Account::class,
             'model_id' => $this->user->id,
-            'role_id' => Role::findByName('member')->id,
+            'role_id' => $memberRoleId,
         ]); // Done manually to avoid firing events
 
         return $this->user;
@@ -84,13 +87,13 @@ abstract class TestCase extends BaseTestCase
         }
 
         $user = Account::factory()->withQualification()->createQuietly();
-        $role = Role::findByName('privacc');
-        $role->givePermissionTo('*');
+
+        $privaccRoleId = Role::findByName('privacc', 'web')->id;
 
         DB::table('mship_account_role')->insert([
             'model_type' => Account::class,
             'model_id' => $user->id,
-            'role_id' => $role->id,
+            'role_id' => $privaccRoleId,
         ]); // Done manually to avoid firing events
 
         return $this->privacc = $user->fresh();
