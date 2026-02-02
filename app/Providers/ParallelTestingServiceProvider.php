@@ -17,7 +17,7 @@ class ParallelTestingServiceProvider extends ServiceProvider
         ParallelTesting::setUpTestDatabase(function (string $database, string $token): void {
             Artisan::call('migrate:fresh', ['--force' => true, '--no-interaction' => true]);
             Artisan::call('db:seed', ['--no-interaction' => true]);
-            Artisan::call('cts:migrate:fresh', ['--force' => true, '--no-interaction' => true]);
+            Artisan::call('cts:migrate:fresh', ['--no-interaction' => true]);
         });
     }
 }
