@@ -16,49 +16,46 @@ class ParallelTestingServiceProvider extends ServiceProvider
         }
 
         ParallelTesting::setUpProcess(function (int $token) {
-            // 1) MAIN DB (mysql)
-            $this->configureMysqlWorkerDatabase($token);
+            // IMPORTANT: switch connections to per-worker DBs first
+            $this->switchMysqlToWorkerDatabase($token);
+            $this->switchCtsToWorkerDatabase($token);
 
-            // Build schema + seed ONCE per worker
+            // Build schema once per worker (NOT per test)
             Artisan::call('migrate:fresh', ['--force' => true]);
+
+            // Seed once per worker so permissions exist for all tests
             Artisan::call('db:seed', ['--force' => true]);
 
-            // 2) CTS DB (secondary)
-            $this->configureCtsWorkerDatabase($token);
-
-            // Build CTS schema ONCE per worker DB
+            // Build CTS schema once per worker
             Artisan::call('cts:migrate:fresh');
         });
     }
 
-    protected function configureMysqlWorkerDatabase(int $token): void
+    private function switchMysqlToWorkerDatabase(int $token): void
     {
         $base = (string) config('database.connections.mysql.database');
-        $database = "{$base}_{$token}";
+        $workerDb = "{$base}_{$token}";
 
-        // Create worker DB
-        DB::statement("CREATE DATABASE IF NOT EXISTS `{$database}`");
+        DB::statement("CREATE DATABASE IF NOT EXISTS `{$workerDb}`");
 
-        // Switch connection to worker DB
-        config(['database.connections.mysql.database' => $database]);
+        config(['database.connections.mysql.database' => $workerDb]);
         DB::purge('mysql');
         DB::reconnect('mysql');
     }
 
-    protected function configureCtsWorkerDatabase(int $token): void
+    private function switchCtsToWorkerDatabase(int $token): void
     {
         if (! config()->has('database.connections.cts')) {
             return;
         }
 
         $base = (string) config('database.connections.cts.database');
-        $database = "{$base}_{$token}";
+        $workerDb = "{$base}_{$token}";
 
-        // Create CTS worker DB
-        DB::connection('mysql')->statement("CREATE DATABASE IF NOT EXISTS `{$database}`");
+        // create CTS DB using mysql connection (it exists + has perms)
+        DB::connection('mysql')->statement("CREATE DATABASE IF NOT EXISTS `{$workerDb}`");
 
-        // Switch CTS connection to worker DB
-        config(['database.connections.cts.database' => $database]);
+        config(['database.connections.cts.database' => $workerDb]);
         DB::purge('cts');
         DB::reconnect('cts');
     }
