@@ -40,7 +40,15 @@ abstract class TestCase extends BaseTestCase
         Carbon::setTestNow($now);
         $this->knownDate = $now;
 
-        $this->seed();
+        // Reset the flag once per parallel worker process
+        ParallelTesting::setUpProcess(function () {
+            static::$seededThisProcess = false;
+        });
+
+        if (! static::$seededThisProcess) {
+            $this->seed(); // seeds once per worker
+            static::$seededThisProcess = true;
+        }
 
         // Force regeneration of permissions cache
         $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();

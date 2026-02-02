@@ -3,16 +3,12 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\ParallelTesting;
 
 class ParallelTestingServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        //
-    }
-
     public function boot(): void
     {
         if (! app()->runningUnitTests()) {
@@ -21,7 +17,7 @@ class ParallelTestingServiceProvider extends ServiceProvider
 
         ParallelTesting::setUpProcess(function (int $token) {
             $this->setUpMysqlDatabase($token);
-            $this->setUpCtsDatabase($token); // optional
+            $this->setUpCtsDatabase($token);
         });
     }
 
@@ -30,28 +26,30 @@ class ParallelTestingServiceProvider extends ServiceProvider
         $base = config('database.connections.mysql.database');
         $database = "{$base}_{$token}";
 
+        // Requires that the current mysql connection points at a DB that exists.
         DB::statement("CREATE DATABASE IF NOT EXISTS `{$database}`");
 
-        config([
-            'database.connections.mysql.database' => $database,
-        ]);
+        config(['database.connections.mysql.database' => $database]);
+        DB::purge('mysql');
+        DB::reconnect('mysql');
     }
 
     protected function setUpCtsDatabase(int $token): void
     {
-        if (! config('database.connections.cts')) {
+        if (! config()->has('database.connections.cts')) {
             return;
         }
 
         $base = config('database.connections.cts.database');
         $database = "{$base}_{$token}";
 
-        DB::connection('mysql')->statement(
-            "CREATE DATABASE IF NOT EXISTS `{$database}`"
-        );
+        DB::connection('mysql')->statement("CREATE DATABASE IF NOT EXISTS `{$database}`");
 
-        config([
-            'database.connections.cts.database' => $database,
-        ]);
+        config(['database.connections.cts.database' => $database]);
+        DB::purge('cts');
+        DB::reconnect('cts');
+
+        // Build CTS schema in THIS worker DB (important!)
+        Artisan::call('cts:migrate:fresh');
     }
 }
