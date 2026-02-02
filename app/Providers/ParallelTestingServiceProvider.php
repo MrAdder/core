@@ -27,7 +27,7 @@ class ParallelTestingServiceProvider extends ServiceProvider
             $this->setUpCtsDatabaseForToken($token);
 
             // Rebuild CTS schema for this worker (isolated DB => no deadlocks/races)
-            Artisan::call('cts:migrate:fresh', ['--force' => true, '--no-interaction' => true]);
+            Artisan::call('cts:migrate:fresh', ['--no-interaction' => true]);
         });
 
         /**
