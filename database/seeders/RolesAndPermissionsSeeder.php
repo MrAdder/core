@@ -15,12 +15,12 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run()
     {
-        // Clear cached roles and permissions
-        app()['cache']->forget('spatie.permission.cache');
+        // Clear cached roles and permissions (recommended API)
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         // Add Privacc Role and Normal Member
         $privacc = Role::firstOrCreate(['name' => 'privacc', 'guard_name' => 'web', 'default' => false]);
-        $member = Role::firstOrCreate(['name' => 'member', 'guard_name' => 'web', 'default' => true]);
+        $member  = Role::firstOrCreate(['name' => 'member', 'guard_name' => 'web', 'default' => true]);
 
         // Create ATC Examiner Roles
         $obsExaminer = Role::firstOrCreate(['name' => 'ATC Examiner (OBS)', 'guard_name' => 'web', 'default' => false]);
@@ -30,8 +30,6 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Add All Permissions
         $permissions = [
-            app()->isProduction() ? null : '*',
-
             // Admin Access Permissions
             'admin.access',
             'horizon.access',
@@ -90,11 +88,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'vt.application.reject.*',
             'vt.application.complete.*',
             'vt.application.cancel.*',
-            // 'vt.application.reference.accept.*',
-            // 'vt.application.reference.reject.*',
-            // 'vt.application.check.modify.*',
 
-            // Waiting List System Permissions,
+            // Waiting List System Permissions
             'waiting-lists.access',
             'waiting-lists.view.*',
             'waiting-lists.view.atc',
@@ -121,7 +116,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Training Places Permissions
             'training-places.view.*',
 
-            // // Feedback System Permissions
+            // Feedback System Permissions
             'feedback.access',
             'feedback.view-submitter',
             'feedback.view-own',
@@ -132,68 +127,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'feedback.view-type.pilot',
             'feedback.view-type.group',
             'feedback.action',
-            // 'feedback.form.create',
-            // 'feedback.form.configure.*',
-
-            // // Endorsement System Permissions
-            // 'atc.endorsement.access',
 
             // Operations System Permissions
             'operations.access',
 
-            // // TeamSpeak Permissions
-            // 'teamspeak.servergroup.serveradmin',
-            // 'teamspeak.idle.extended',
-            // 'teamspeak.idle.permanent',
-            // 'teamspeak.servergroup.divisionstaff',
-            // 'teamspeak.servergroup.webstaff',
-            // 'teamspeak.servergroup.rtsm',
-            // 'teamspeak.servergroup.leadmentor',
-            // 'teamspeak.servergroup.atcstaff',
-            // 'teamspeak.servergroup.ptdstaff',
-            // 'teamspeak.servergroup.member',
-            // 'teamspeak.servergroup.divisioninstructor',
-            // 'teamspeak.channel.essex',
-            // 'teamspeak.channel.heathrow',
-            // 'teamspeak.channel.egtt',
-            // 'teamspeak.channel.northern',
-            // 'teamspeak.channel.scottish',
-            // 'teamspeak.channel.serts',
-            // 'teamspeak.channel.swrts',
-            // 'teamspeak.channel.military',
-            // 'teamspeak.channel.pilot',
-            // 'teamspeak.servergroup.globalmoderator',
-            // 'teamspeak.servergroup.bogecfounder',
-            // 'teamspeak.servergroup.marketingstaff',
-            // 'teamspeak.servergroup.communitymanager',
-            // 'teamspeak.servergroup.tgncmanager',
-            // 'teamspeak.servergroup.atcmentor',
-            // 'teamspeak.servergroup.ptdmentor',
-
-            // // Discord Permissions
-            // 'discord.member',
-            // 'discord.dsg',
-            // 'discord.web',
-            // 'discord.moderator',
-            // 'discord.memberservices',
-            // 'discord.marketing',
-            // 'discord.trainingmanager',
-            // 'discord.atc.divisioninstructor',
-            // 'discord.atc.appinstructor',
-            // 'discord.atc.twrinstructor',
-            // 'discord.atc.ncinstructor',
-            // 'discord.atc.examiner',
-            // 'discord.atc.mentor.s1',
-            // 'discord.atc.mentor.s2',
-            // 'discord.atc.mentor.s3',
-            // 'discord.atc.mentor.c1',
-            // 'discord.atc.mentor.heathrow',
-            // 'discord.pilot.examiner',
-            // 'discord.pilot.instructor',
-            // 'discord.pilot.mentor',
-            // 'discord.graphics',
-            // 'discord.rostering',
-            // 'discord.livestreaming',
+            // Discord Permissions
             'discord.atc.student.obs',
             'discord.atc.student.heathrow',
 
@@ -218,16 +156,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'roster.manage',
             'roster.restriction.create',
             'roster.restriction.remove',
-
         ];
 
         foreach ($permissions as $permission) {
-            if (! $permission) {
-                continue;
-            }
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
+        // Give privacc ALL permissions (robust; no reliance on "*" existing)
         $privacc->syncPermissions(Permission::query()->where('guard_name', 'web')->get());
 
         // $member->givePermissionTo('discord.member');
