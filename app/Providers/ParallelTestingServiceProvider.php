@@ -19,5 +19,16 @@ class ParallelTestingServiceProvider extends ServiceProvider
             Artisan::call('db:seed', ['--no-interaction' => true]);
             Artisan::call('cts:migrate:fresh', ['--no-interaction' => true]);
         });
+        ParallelTesting::setUpProcess(function (int $token) {
+            $baseCts = config('database.connections.cts.database'); // "cts_test"
+            $ctsDb = "{$baseCts}_dev_{$token}";
+            
+            config(['database.connections.cts.database' => $ctsDb]);
+            
+            DB::purge('cts');
+            DB::reconnect('cts');
+
+            Artisan::call('cts:migrate:fresh', ['--no-interaction' => true]);
+        });
     }
 }
