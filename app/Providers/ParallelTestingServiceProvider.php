@@ -17,22 +17,18 @@ class ParallelTestingServiceProvider extends ServiceProvider
         }
 
         /**
-         * Runs once per parallel worker process.
-         * Perfect place to:
-         *  - point the CTS connection at a unique database for this token
-         *  - create that database if needed
-         *  - rebuild CTS schema once per worker
+         * One-time per parallel worker.
+         * Put CTS setup here so MockCtsDatabase::create() cannot race other workers.
          */
         ParallelTesting::setUpProcess(function (int $token): void {
-            $this->setUpCtsDatabaseForToken($token);
+            $this->useCtsDatabaseForToken($token);
 
-            // Rebuild CTS schema for this worker (isolated DB => no deadlocks/races)
+            // This is the important part: CTS schema reset once per worker DB
             Artisan::call('cts:migrate:fresh', ['--no-interaction' => true]);
         });
 
         /**
-         * Runs when Laravel is setting up the "main" test database.
-         * Keep this for your default connection migrations/seeds.
+         * Normal Laravel test DB setup (default connection).
          */
         ParallelTesting::setUpTestDatabase(function (string $database, string $token): void {
             Artisan::call('migrate:fresh', ['--force' => true, '--no-interaction' => true]);
@@ -40,21 +36,21 @@ class ParallelTestingServiceProvider extends ServiceProvider
         });
     }
 
-    private function setUpCtsDatabaseForToken(int $token): void
+    private function useCtsDatabaseForToken(int $token): void
     {
-        // Base CTS database name from config (e.g. "cts_test")
+        // Base DB name from config for CTS connection, e.g. "cts_test"
         $base = (string) Config::get('database.connections.cts.database');
 
-        // Make it per worker: cts_test_1, cts_test_2, ...
+        // Make it unique per worker, e.g. cts_test_1, cts_test_2...
         $dbName = "{$base}_{$token}";
 
-        // Update runtime config for this worker process
+        // Apply runtime config
         Config::set('database.connections.cts.database', $dbName);
 
-        // Reconnect so the new database name takes effect
+        // Ensure Laravel actually reconnects using the new DB
         DB::purge('cts');
 
-        // Create the DB (connect without selecting a DB)
+        // Ensure the database exists (MySQL/MariaDB)
         $this->createDatabaseIfMissing($dbName);
 
         DB::reconnect('cts');
@@ -64,7 +60,7 @@ class ParallelTestingServiceProvider extends ServiceProvider
     {
         $ctsConfig = Config::get('database.connections.cts');
 
-        // Build a "server" connection using same creds but without database selected.
+        // Clone CTS config but without selecting a database
         $serverConfig = $ctsConfig;
         $serverConfig['database'] = null;
 
@@ -72,10 +68,9 @@ class ParallelTestingServiceProvider extends ServiceProvider
 
         DB::purge('cts_server');
 
-        $conn = DB::connection('cts_server');
-
-        // Works for MySQL/MariaDB.
-        $conn->statement("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        DB::connection('cts_server')->statement(
+            "CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+        );
 
         DB::disconnect('cts_server');
     }
