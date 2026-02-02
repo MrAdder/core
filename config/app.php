@@ -173,7 +173,6 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\TrainingEventServiceProvider::class,
         App\Providers\FilamentServiceProvider::class,
-        App\Providers\ParallelTestingServiceProvider::class,
     ],
 
     /*
