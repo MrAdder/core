@@ -9,7 +9,6 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\ParallelTesting;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -34,22 +33,12 @@ abstract class TestCase extends BaseTestCase
         // Add HTTP protocol
         $parsed = parse_url(config('app.url'));
         if (empty($parsed['scheme'])) {
-            config(['app.url' => 'http://'.config('app.url')]);
+            config(['app.url' => 'http://' . config('app.url')]);
         }
 
         $now = now()->setMicro(0);
         Carbon::setTestNow($now);
         $this->knownDate = $now;
-
-        // Reset the flag once per parallel worker process
-        ParallelTesting::setUpProcess(function () {
-            static::$seededThisProcess = false;
-        });
-
-        if (! static::$seededThisProcess) {
-            $this->seed(); // seeds once per worker
-            static::$seededThisProcess = true;
-        }
 
         // Force regeneration of permissions cache
         $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
@@ -79,7 +68,11 @@ abstract class TestCase extends BaseTestCase
         }
 
         $this->user = Account::factory()->withQualification()->createQuietly();
-        DB::table('mship_account_role')->insert(['model_type' => Account::class, 'model_id' => $this->user->id, 'role_id' => Role::findByName('member')->id]); // Done manually to avoid firing events
+        DB::table('mship_account_role')->insert([
+            'model_type' => Account::class,
+            'model_id' => $this->user->id,
+            'role_id' => Role::findByName('member')->id,
+        ]); // Done manually to avoid firing events
 
         return $this->user;
     }
@@ -93,7 +86,12 @@ abstract class TestCase extends BaseTestCase
         $user = Account::factory()->withQualification()->createQuietly();
         $role = Role::findByName('privacc');
         $role->givePermissionTo('*');
-        DB::table('mship_account_role')->insert(['model_type' => Account::class, 'model_id' => $user->id, 'role_id' => $role->id]); // Done manually to avoid firing events
+
+        DB::table('mship_account_role')->insert([
+            'model_type' => Account::class,
+            'model_id' => $user->id,
+            'role_id' => $role->id,
+        ]); // Done manually to avoid firing events
 
         return $this->privacc = $user->fresh();
     }
