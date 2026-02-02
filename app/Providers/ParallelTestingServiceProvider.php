@@ -32,6 +32,8 @@ class ParallelTestingServiceProvider extends ServiceProvider
         config(['database.connections.mysql.database' => $database]);
         DB::purge('mysql');
         DB::reconnect('mysql');
+        Artisan::call('migrate:fresh');
+        Artisan::call('db:seed', ['--force' => true]);
     }
 
     protected function setUpCtsDatabase(int $token): void
@@ -51,5 +53,6 @@ class ParallelTestingServiceProvider extends ServiceProvider
 
         // Build CTS schema in THIS worker DB (important!)
         Artisan::call('cts:migrate:fresh');
+        Artisan::call('db:seed', ['--force' => true]);
     }
 }
