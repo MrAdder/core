@@ -103,7 +103,7 @@ jobs:
         run: php artisan telescope:publish
 
       - name: Migrate CTS
-        run: php artisan cts:migrate:fresh
+        run: php artisan cts:migrate:fresh && php artisan migrate:fresh
 
       - name: Cache Routes
         run: php artisan route:cache
@@ -115,7 +115,7 @@ jobs:
         run: php artisan serve -q &
 
       - name: Execute PHPUnit Tests
-        run: php artisan test --parallel --processes=4 --recreate-databases
+        run: php artisan test --parallel --processes=4
 
   trigger-deploy:
     name: Trigger Deploy
