@@ -20,7 +20,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Add Privacc Role and Normal Member
         $privacc = Role::firstOrCreate(['name' => 'privacc', 'guard_name' => 'web', 'default' => false]);
-        $member  = Role::firstOrCreate(['name' => 'member', 'guard_name' => 'web', 'default' => true]);
+        $member = Role::firstOrCreate(['name' => 'member', 'guard_name' => 'web', 'default' => true]);
 
         // Create ATC Examiner Roles
         $obsExaminer = Role::firstOrCreate(['name' => 'ATC Examiner (OBS)', 'guard_name' => 'web', 'default' => false]);
