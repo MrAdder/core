@@ -33,7 +33,7 @@ abstract class TestCase extends BaseTestCase
         // Add HTTP protocol
         $parsed = parse_url(config('app.url'));
         if (empty($parsed['scheme'])) {
-            config(['app.url' => 'http://' . config('app.url')]);
+            config(['app.url' => 'http://'.config('app.url')]);
         }
 
         $now = now()->setMicro(0);
