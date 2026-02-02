@@ -102,8 +102,8 @@ jobs:
       - name: Publish Telescope
         run: php artisan telescope:publish
 
-      - name: Migrate & Seed Database
-        run: php artisan migrate && php artisan cts:migrate:fresh
+      #- name: Migrate & Seed Database
+      #  run: php artisan migrate && php artisan cts:migrate:fresh
 
       - name: Cache Routes
         run: php artisan route:cache
