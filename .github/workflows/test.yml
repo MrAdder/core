@@ -81,8 +81,8 @@ jobs:
       - name: Create Databases
         run: |
           sudo systemctl start mysql.service
-          mysql -e 'CREATE DATABASE IF NOT EXISTS core;' -h127.0.0.1 -uroot -proot
-          mysql -e 'CREATE DATABASE IF NOT EXISTS cts;' -h127.0.0.1 -uroot -proot
+          mysql -e 'CREATE DATABASE IF NOT EXISTS core_test;' -h127.0.0.1 -uroot -proot
+          mysql -e 'CREATE DATABASE IF NOT EXISTS cts_test;' -h127.0.0.1 -uroot -proot
 
       - name: Composer Authentication
         run: composer config -g github-oauth.github.com ${{ secrets.GITHUB_TOKEN }}
