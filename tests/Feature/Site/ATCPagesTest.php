@@ -61,4 +61,12 @@ class ATCPagesTest extends TestCase
             ->assertSee('Create a booking')
             ->assertSee(route('site.atc.bookings.store'));
     }
+
+    #[Test]
+    public function bookings_page_renders_calendar_script_block()
+    {
+        $this->get(route('site.atc.bookings'))
+            ->assertOk()
+            ->assertSee('const bookingsApiEndpoint', false);
+    }
 }

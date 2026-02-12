@@ -192,7 +192,7 @@
     </div>
 @stop
 
-@push('scripts')
+@section('scripts')
 <script>
     (function () {
         const calendarGrid = document.getElementById('booking-calendar-grid');
@@ -205,6 +205,7 @@
         }
 
         const today = new Date();
+        const bookingsApiEndpoint = @json(route('api.cts.bookings'));
         let weekOffset = 0;
 
         function toDateString(date) {
@@ -258,7 +259,7 @@
         }
 
         async function fetchBookingsForDate(dateString) {
-            const response = await fetch(`/api/cts/bookings?date=${dateString}`);
+            const response = await fetch(`${bookingsApiEndpoint}?date=${dateString}`);
             if (!response.ok) {
                 throw new Error(`Request failed for ${dateString}`);
             }
@@ -305,4 +306,4 @@
         renderWeek();
     })();
 </script>
-@endpush
+@stop
