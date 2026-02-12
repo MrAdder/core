@@ -15,8 +15,11 @@ class CtsController
 
     public function getBookings(Request $request)
     {
-        if (app()->environment() !== 'development' && RateLimiter::tooManyAttempts('get-bookings:'.$request->ip(), 1)) {
-            $seconds = RateLimiter::availableIn('get-bookings:'.$request->ip());
+        $rateLimitKey = 'get-bookings:'.$request->ip();
+        $maxAttempts = 30;
+
+        if (app()->environment() !== 'development' && RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
 
             return response()->json([
                 'message' => 'Too many requests. Please try again after '.$seconds.' seconds.',
@@ -25,7 +28,7 @@ class CtsController
                 ->header('X-RateLimit-Reset', now()->addSeconds($seconds)->getTimestamp());
         }
 
-        RateLimiter::hit('get-bookings:'.$request->ip(), 300); // 5 minutes
+        RateLimiter::hit($rateLimitKey, 300); // 5 minutes
 
         $date = Carbon::now()->startOfDay();
         $requestedDate = $request->get('date', null);
