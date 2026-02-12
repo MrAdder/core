@@ -30,21 +30,24 @@ class BookingCalendarController extends \App\Http\Controllers\BaseController
             ->get()
             ->groupBy(fn (SessionBookingSlot $slot): string => $slot->scheduled_for->toDateString());
 
+        $daysInMonth = collect(range(1, $month->daysInMonth))
+            ->map(fn (int $day): Carbon => $month->copy()->day($day));
+
         $this->setTitle('Mentor & Examiner Booking Calendar');
 
         return $this->viewMake('site.atc.bookings-calendar', [
             'month' => $month,
             'slotsByDate' => $slots,
-            'daysInMonth' => collect(range(1, $month->daysInMonth))
-                ->map(fn (int $day): Carbon => $month->copy()->day($day)),
+            'daysInMonth' => $daysInMonth,
+            'firstDayOffset' => $month->copy()->startOfMonth()->dayOfWeekIso - 1,
         ]);
     }
 
     public function pickup(Request $request, SessionBookingSlot $sessionBookingSlot): RedirectResponse
     {
         $validated = $request->validate([
-            'picked_up_by_name' => ['required', 'string', 'max:100'],
-            'picked_up_by_email' => ['required', 'email', 'max:255'],
+            'picked_up_by_name' => ['nullable', 'string', 'max:100'],
+            'picked_up_by_email' => ['nullable', 'email', 'max:255'],
             'picked_up_role' => ['required', 'in:mentor,examiner'],
             'picked_up_by_cid' => [
                 Rule::requiredIf(fn (): bool => $sessionBookingSlot->isOpenSlot()),
@@ -59,6 +62,17 @@ class BookingCalendarController extends \App\Http\Controllers\BaseController
 
         if (! $sessionBookingSlot->canBePickedUpBy($validated['picked_up_role'])) {
             return back()->withErrors(['pickup' => 'This session can only be picked up by: '.$sessionBookingSlot->roleRestrictionLabel().'.']);
+        }
+
+        $account = auth()->user();
+
+        if ($account) {
+            $validated['picked_up_by_name'] = trim(($account->name_first ?? '').' '.($account->name_last ?? ''));
+            $validated['picked_up_by_email'] = $account->email;
+
+            if ($sessionBookingSlot->isOpenSlot()) {
+                $validated['picked_up_by_cid'] = (string) $account->id;
+            }
         }
 
         $sessionBookingSlot->update([

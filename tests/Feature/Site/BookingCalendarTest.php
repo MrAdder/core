@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Site;
 
+use App\Models\Mship\Account;
 use App\Models\Training\SessionBookingSlot;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -172,6 +173,34 @@ class BookingCalendarTest extends TestCase
 
         $response->assertRedirect(route('site.atc.bookings.calendar'));
         $response->assertSessionHasErrors('picked_up_by_cid');
+    }
+
+
+    public function test_logged_in_user_can_book_directly_from_calendar(): void
+    {
+        $account = Account::factory()->create([
+            'id' => 1669679,
+            'name_first' => 'Tristan',
+            'name_last' => 'Shaw',
+            'email' => 'tristan@example.com',
+        ]);
+
+        $slot = SessionBookingSlot::create([
+            'session_type' => SessionBookingSlot::TYPE_OPEN_SLOT,
+            'title' => 'Direct booking slot',
+            'scheduled_for' => now()->addDay(),
+            'duration_minutes' => 60,
+        ]);
+
+        $response = $this->actingAs($account)->post(route('site.atc.bookings.pickup', $slot), [
+            'picked_up_role' => 'mentor',
+        ]);
+
+        $response->assertRedirect();
+        $slot = $slot->fresh();
+        $this->assertSame('Tristan Shaw', $slot->picked_up_by_name);
+        $this->assertSame('tristan@example.com', $slot->picked_up_by_email);
+        $this->assertSame('1669679', (string) $slot->picked_up_by_cid);
     }
 
 }
