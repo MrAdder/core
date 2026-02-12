@@ -54,6 +54,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'training.theory.view.twr',
             'training.theory.view.app',
             'training.theory.view.ctr',
+            'training.booking-slots.view',
+            'training.booking-slots.manage',
 
             // Account Permissions
             'account.self',

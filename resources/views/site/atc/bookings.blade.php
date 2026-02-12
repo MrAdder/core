@@ -15,6 +15,13 @@
                         bookings and ensure that you arrive and control for any bookings you make.
                     </p>
 
+
+                    <p>
+                        Looking to help with training delivery? Visit the
+                        <a href="{{ route('site.atc.bookings.calendar') }}">Mentor &amp; Examiner booking calendar</a>
+                        to pick up available exam, mentoring, and open training slots.
+                    </p>
+
                     <h2>
                         General
                     </h2>

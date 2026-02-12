@@ -20,6 +20,8 @@ Route::group([
         Route::get('/heathrow')->uses('ATCPagesController@viewHeathrow')->name('heathrow');
         Route::get('/becoming-a-mentor')->uses('ATCPagesController@viewBecomingAMentor')->name('mentor');
         Route::get('/bookings')->uses('ATCPagesController@viewBookings')->name('bookings');
+        Route::get('/bookings/calendar')->uses('BookingCalendarController@index')->name('bookings.calendar');
+        Route::post('/bookings/{sessionBookingSlot}/pickup')->uses('BookingCalendarController@pickup')->name('bookings.pickup');
     });
 
     Route::group([
