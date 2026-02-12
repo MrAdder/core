@@ -203,4 +203,41 @@ class BookingCalendarTest extends TestCase
         $this->assertSame('1669679', (string) $slot->picked_up_by_cid);
     }
 
+
+    public function test_past_slots_are_hidden_from_public_calendar(): void
+    {
+        SessionBookingSlot::create([
+            'session_type' => SessionBookingSlot::TYPE_OPEN_SLOT,
+            'title' => 'Expired Slot',
+            'scheduled_for' => now('UTC')->subHours(3),
+            'duration_minutes' => 60,
+        ]);
+
+        $response = $this->get(route('site.atc.bookings.calendar', ['month' => now('UTC')->format('Y-m')]));
+
+        $response->assertOk();
+        $response->assertDontSee('Expired Slot');
+    }
+
+    public function test_cannot_book_slot_after_zulu_end_time(): void
+    {
+        $slot = SessionBookingSlot::create([
+            'session_type' => SessionBookingSlot::TYPE_OPEN_SLOT,
+            'title' => 'Ended Zulu Slot',
+            'scheduled_for' => now('UTC')->subHours(2),
+            'duration_minutes' => 30,
+        ]);
+
+        $response = $this->from(route('site.atc.bookings.calendar'))->post(route('site.atc.bookings.pickup', $slot), [
+            'picked_up_by_name' => 'Late Booker',
+            'picked_up_by_email' => 'late@example.com',
+            'picked_up_role' => 'mentor',
+            'picked_up_by_cid' => '1669679',
+        ]);
+
+        $response->assertRedirect(route('site.atc.bookings.calendar'));
+        $response->assertSessionHasErrors('pickup');
+        $this->assertNull($slot->fresh()->picked_up_at);
+    }
+
 }

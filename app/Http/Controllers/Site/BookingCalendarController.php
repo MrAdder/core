@@ -28,6 +28,7 @@ class BookingCalendarController extends \App\Http\Controllers\BaseController
             ->whereBetween('scheduled_for', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->orderBy('scheduled_for')
             ->get()
+            ->reject(fn (SessionBookingSlot $slot): bool => $slot->hasEndedForPublic())
             ->groupBy(fn (SessionBookingSlot $slot): string => $slot->scheduled_for->toDateString());
 
         $daysInMonth = collect(range(1, $month->daysInMonth))
@@ -55,6 +56,10 @@ class BookingCalendarController extends \App\Http\Controllers\BaseController
                 'digits_between:6,10',
             ],
         ]);
+
+        if ($sessionBookingSlot->hasEndedForPublic()) {
+            return back()->withErrors(['pickup' => 'This slot has already ended (Zulu/UTC) and can no longer be booked.']);
+        }
 
         if ($sessionBookingSlot->isPickedUp()) {
             return back()->withErrors(['pickup' => 'This session has already been picked up.']);

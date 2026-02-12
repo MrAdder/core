@@ -2,6 +2,7 @@
 
 namespace App\Models\Training;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -116,6 +117,24 @@ class SessionBookingSlot extends Model
         }
 
         return sprintf('%s (%s)', $displayName, $this->picked_up_by_cid);
+    }
+
+
+    public function scheduledForZulu(): Carbon
+    {
+        return $this->scheduled_for->copy()->utc();
+    }
+
+    public function endsAtZulu(): Carbon
+    {
+        return $this->scheduledForZulu()->addMinutes((int) $this->duration_minutes);
+    }
+
+    public function hasEndedForPublic(?Carbon $reference = null): bool
+    {
+        $referenceTime = ($reference ?? now('UTC'))->copy()->utc();
+
+        return $this->endsAtZulu()->lte($referenceTime);
     }
 
 }

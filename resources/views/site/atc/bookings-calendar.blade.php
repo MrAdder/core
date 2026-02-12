@@ -121,7 +121,14 @@
                                 @forelse ($slots as $slot)
                                     <div class="booking-calendar-slot">
                                         <div class="booking-calendar-slot-title">{{ $slot->title }}</div>
-                                        <div>{{ $slot->scheduled_for->format('H:i') }}&ndash;{{ $slot->scheduled_for->copy()->addMinutes($slot->duration_minutes)->format('H:i') }} UTC</div>
+                                        <div>
+                                            <strong>Zulu:</strong>
+                                            {{ $slot->scheduledForZulu()->format('H:i') }}&ndash;{{ $slot->endsAtZulu()->format('H:i') }} UTC
+                                        </div>
+                                        <div>
+                                            <strong>Local:</strong>
+                                            {{ $slot->scheduledForZulu()->copy()->timezone('Europe/London')->format('H:i') }}&ndash;{{ $slot->endsAtZulu()->copy()->timezone('Europe/London')->format('H:i') }} Europe/London
+                                        </div>
                                         <div>{{ $slot->isExam() ? 'Exam' : ($slot->isMentorSession() ? 'Mentor Session' : 'Open Slot') }}</div>
                                         <div><small class="text-muted">{{ $slot->roleRestrictionLabel() }}</small></div>
 
