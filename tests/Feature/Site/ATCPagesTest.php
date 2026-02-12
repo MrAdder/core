@@ -42,4 +42,23 @@ class ATCPagesTest extends TestCase
     {
         $this->get(route('site.atc.bookings'))->assertOk();
     }
+
+    #[Test]
+    public function guests_are_prompted_to_log_in_on_the_bookings_page()
+    {
+        $this->get(route('site.atc.bookings'))
+            ->assertOk()
+            ->assertSee('Log in')
+            ->assertDontSee('Create a booking');
+    }
+
+    #[Test]
+    public function logged_in_users_can_see_the_booking_form_on_the_public_page()
+    {
+        $this->actingAs($this->user)
+            ->get(route('site.atc.bookings'))
+            ->assertOk()
+            ->assertSee('Create a booking')
+            ->assertSee(route('site.atc.bookings.store'));
+    }
 }

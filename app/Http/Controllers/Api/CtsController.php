@@ -52,14 +52,49 @@ class CtsController
 
         return response()->json([
             'bookings' => $bookings->map(function ($booking) {
+                $bookedBy = $this->buildPublicBookedBy($booking);
+
                 // we exclude the member object to avoid exposing personal data
-                return collect($booking)->except(['member'])->toArray();
+                return collect($booking)
+                    ->except(['member'])
+                    ->merge(['booked_by' => $bookedBy])
+                    ->toArray();
             }),
             'date' => $date->toDateString(),
             'count' => $bookings->count(),
             'next_page_url' => $this->generateNextPageUrl($date),
             'previous_page_url' => $this->generatePreviousPageUrl($date),
         ]);
+    }
+
+    private function buildPublicBookedBy($booking): string
+    {
+        if (($booking['type'] ?? null) !== 'BK') {
+            return 'Hidden';
+        }
+
+        $memberName = $booking['member']['name'] ?? null;
+        $memberCid = $booking['member']['id'] ?? null;
+
+        if (! $memberName || ! $memberCid) {
+            return 'Hidden';
+        }
+
+        return $this->formatPublicBookingName($memberName).' '.$memberCid;
+    }
+
+    private function formatPublicBookingName(string $memberName): string
+    {
+        $nameParts = preg_split('/\s+/', trim($memberName)) ?: [];
+
+        if (count($nameParts) < 2) {
+            return $memberName;
+        }
+
+        $firstName = $nameParts[0];
+        $surnameInitial = strtoupper(substr(end($nameParts), 0, 1));
+
+        return sprintf('%s %s.', $firstName, $surnameInitial);
     }
 
     private function generateNextPageUrl(Carbon $date): string

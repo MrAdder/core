@@ -154,6 +154,10 @@ Route::group([
     Route::get('endorsements/heathrow-s1')->uses('EndorsementController@getHeathrowGroundS1Index')->name('endorsements.heathrow_ground_s1');
 });
 
+Route::post('/atc/bookings')->uses('Site\ATCPagesController@storeBooking')
+    ->middleware('auth_full_group')
+    ->name('site.atc.bookings.store');
+
 // Network data
 Route::group([
     'as' => 'networkdata.',
