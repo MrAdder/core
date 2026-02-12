@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Repositories\Cts\BookingRepository;
+use App\Models\Atc\Booking;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Http\Request;
@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class CtsController
 {
-    public function __construct(private BookingRepository $bookingRepository) {}
-
     public function getBookings(Request $request)
     {
         $rateLimitKey = 'get-bookings:'.$request->ip();
@@ -31,9 +29,8 @@ class CtsController
         RateLimiter::hit($rateLimitKey, 300); // 5 minutes
 
         $date = Carbon::now()->startOfDay();
-        $requestedDate = $request->get('date', null);
+        $requestedDate = $request->get('date');
 
-        // Validate date, default to today
         if ($requestedDate) {
             try {
                 $date = Carbon::parse($requestedDate);
@@ -43,7 +40,6 @@ class CtsController
                         'message' => 'Date is too far in the past. Please use a date within the last 30 days. Oldest date allowed: '.Carbon::now()->subDays(30)->toDateString(),
                     ], Response::HTTP_BAD_REQUEST);
                 }
-
             } catch (InvalidFormatException $e) {
                 return response()->json([
                     'message' => 'Invalid date format. Please use YYYY-MM-DD.',
@@ -51,17 +47,22 @@ class CtsController
             }
         }
 
-        $bookings = $this->bookingRepository->getBookings($date);
+        $bookings = Booking::query()
+            ->whereDate('date', $date->toDateString())
+            ->orderBy('from')
+            ->get();
 
         return response()->json([
-            'bookings' => $bookings->map(function ($booking) {
-                $bookedBy = $this->buildPublicBookedBy($booking);
-
-                // we exclude the member object to avoid exposing personal data
-                return collect($booking)
-                    ->except(['member'])
-                    ->merge(['booked_by' => $bookedBy])
-                    ->toArray();
+            'bookings' => $bookings->map(function (Booking $booking) {
+                return [
+                    'id' => $booking->id,
+                    'date' => Carbon::parse($booking->date)->toDateString(),
+                    'from' => Carbon::parse($booking->from)->format('H:i'),
+                    'to' => Carbon::parse($booking->to)->format('H:i'),
+                    'position' => $booking->position,
+                    'type' => $booking->type,
+                    'booked_by' => $this->buildPublicBookedBy($booking),
+                ];
             }),
             'date' => $date->toDateString(),
             'count' => $bookings->count(),
@@ -70,28 +71,25 @@ class CtsController
         ]);
     }
 
-    private function buildPublicBookedBy($booking): string
+    private function buildPublicBookedBy(Booking $booking): string
     {
-        if (($booking['type'] ?? null) !== 'BK') {
+        if ($booking->type !== 'BK') {
             return 'Hidden';
         }
 
-        $memberName = $booking['member']['name'] ?? null;
-        $memberCid = $booking['member']['id'] ?? null;
-
-        if (! $memberName || ! $memberCid) {
+        if (! $booking->booked_by_name || ! $booking->booked_by_cid) {
             return 'Hidden';
         }
 
-        return $this->formatPublicBookingName($memberName).' '.$memberCid;
+        return $this->formatPublicBookingName($booking->booked_by_name).' '.$booking->booked_by_cid;
     }
 
-    private function formatPublicBookingName(string $memberName): string
+    private function formatPublicBookingName(string $bookedByName): string
     {
-        $nameParts = preg_split('/\s+/', trim($memberName)) ?: [];
+        $nameParts = preg_split('/\s+/', trim($bookedByName)) ?: [];
 
         if (count($nameParts) < 2) {
-            return $memberName;
+            return $bookedByName;
         }
 
         $firstName = $nameParts[0];

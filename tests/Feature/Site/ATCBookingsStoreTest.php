@@ -2,8 +2,7 @@
 
 namespace Tests\Feature\Site;
 
-use App\Models\Cts\Booking;
-use App\Models\Cts\Member;
+use App\Models\Atc\Booking;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -16,12 +15,6 @@ class ATCBookingsStoreTest extends TestCase
 
         $user = $this->user;
 
-        Member::factory()->create([
-            'id' => 912345,
-            'cid' => $user->id,
-            'name' => $user->full_name,
-        ]);
-
         $response = $this->actingAs($user)->post(route('site.atc.bookings.store'), [
             'position' => 'EGCC_TWR',
             'date' => $this->knownDate->copy()->addDay()->toDateString(),
@@ -32,11 +25,11 @@ class ATCBookingsStoreTest extends TestCase
 
         $response->assertRedirect(route('site.atc.bookings'));
 
-        $this->assertDatabaseHas('bookings', [
+        $this->assertDatabaseHas('atc_bookings', [
             'position' => 'EGCC_TWR',
             'type' => 'BK',
-            'member_id' => 912345,
-        ], 'cts');
+            'booked_by_cid' => $user->id,
+        ]);
     }
 
     #[Test]
@@ -46,16 +39,12 @@ class ATCBookingsStoreTest extends TestCase
 
         $user = $this->user;
 
-        $member = Member::factory()->create([
-            'cid' => $user->id,
-        ]);
-
         Booking::factory()->create([
             'date' => $this->knownDate->copy()->addDay()->toDateString(),
             'position' => 'EGCC_TWR',
-            'from' => '10:00',
-            'to' => '12:00',
-            'member_id' => $member->id,
+            'from' => '10:00:00',
+            'to' => '12:00:00',
+            'type' => 'BK',
         ]);
 
         $response = $this->actingAs($user)->from(route('site.atc.bookings'))->post(route('site.atc.bookings.store'), [

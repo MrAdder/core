@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Site;
 
-use App\Models\Cts\Booking;
+use App\Models\Atc\Booking;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,12 +74,6 @@ class ATCPagesController extends \App\Http\Controllers\BaseController
             'type' => ['required', Rule::in(['BK', 'ME'])],
         ]);
 
-        $member = $request->user()->member;
-
-        if (! $member) {
-            return back()->withErrors(['booking' => 'Your account is not linked to CTS, so a booking could not be created.'])->withInput();
-        }
-
         $overlappingBooking = Booking::query()
             ->where('date', $validated['date'])
             ->where('position', $validated['position'])
@@ -96,9 +90,9 @@ class ATCPagesController extends \App\Http\Controllers\BaseController
             'from' => $validated['from'],
             'to' => $validated['to'],
             'position' => $validated['position'],
-            'member_id' => $member->id,
             'type' => $validated['type'],
-            'type_id' => 0,
+            'booked_by_cid' => $request->user()->id,
+            'booked_by_name' => $request->user()->full_name,
         ]);
 
         return redirect()->route('site.atc.bookings')->with('booking_status', 'Booking created successfully.');

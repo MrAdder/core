@@ -2,28 +2,23 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Cts\Booking;
-use App\Models\Cts\Member;
+use App\Models\Atc\Booking;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CtsBookingsApiTest extends TestCase
 {
     #[Test]
-    public function it_excludes_member_information_and_returns_public_booked_by_for_standard_bookings()
+    public function it_returns_public_booked_by_for_standard_bookings_from_core_storage()
     {
-        $member = Member::factory()->create([
-            'cid' => 1398426,
-            'name' => 'Reece Brown',
-        ]);
-
         Booking::factory()->create([
             'date' => $this->knownDate->toDateString(),
-            'from' => '10:00',
-            'to' => '13:00',
+            'from' => '10:00:00',
+            'to' => '13:00:00',
             'position' => 'EGCC_TWR',
-            'member_id' => $member->id,
             'type' => 'BK',
+            'booked_by_cid' => 1398426,
+            'booked_by_name' => 'Reece Brown',
         ]);
 
         $response = $this->getJson(route('api.cts.bookings', ['date' => $this->knownDate->toDateString()]));
@@ -37,18 +32,14 @@ class CtsBookingsApiTest extends TestCase
     #[Test]
     public function it_returns_hidden_booked_by_for_non_standard_bookings()
     {
-        $member = Member::factory()->create([
-            'cid' => 1398426,
-            'name' => 'Reece Brown',
-        ]);
-
         Booking::factory()->create([
             'date' => $this->knownDate->toDateString(),
-            'from' => '10:00',
-            'to' => '13:00',
+            'from' => '10:00:00',
+            'to' => '13:00:00',
             'position' => 'EGCC_TWR',
-            'member_id' => $member->id,
             'type' => 'ME',
+            'booked_by_cid' => 1398426,
+            'booked_by_name' => 'Reece Brown',
         ]);
 
         $response = $this->getJson(route('api.cts.bookings', ['date' => $this->knownDate->toDateString()]));
