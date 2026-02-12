@@ -1,6 +1,9 @@
 @extends('layout')
 
 @section('content')
+    @php($calendarMonth = isset($month) ? $month : now()->startOfMonth())
+    @php($calendarDaysInMonth = isset($daysInMonth) ? $daysInMonth : collect(range(1, $calendarMonth->daysInMonth))->map(fn (int $day) => $calendarMonth->copy()->day($day)))
+    @php($calendarSlotsByDate = isset($slotsByDate) ? $slotsByDate : collect())
     <div class="row">
         <div class="col-md-10 col-md-offset-1">
             <div class="panel panel-ukblue">
@@ -23,22 +26,22 @@
 
                     <div class="row" style="margin-bottom: 20px;">
                         <div class="col-sm-4">
-                            <a class="btn btn-default" href="{{ route('site.atc.bookings.calendar', ['month' => $month->copy()->subMonth()->format('Y-m')]) }}">
+                            <a class="btn btn-default" href="{{ route('site.atc.bookings.calendar', ['month' => $calendarMonth->copy()->subMonth()->format('Y-m')]) }}">
                                 &larr; Previous Month
                             </a>
                         </div>
                         <div class="col-sm-4 text-center">
-                            <strong>{{ $month->format('F Y') }}</strong>
+                            <strong>{{ $calendarMonth->format('F Y') }}</strong>
                         </div>
                         <div class="col-sm-4 text-right">
-                            <a class="btn btn-default" href="{{ route('site.atc.bookings.calendar', ['month' => $month->copy()->addMonth()->format('Y-m')]) }}">
+                            <a class="btn btn-default" href="{{ route('site.atc.bookings.calendar', ['month' => $calendarMonth->copy()->addMonth()->format('Y-m')]) }}">
                                 Next Month &rarr;
                             </a>
                         </div>
                     </div>
 
-                    @foreach ($daysInMonth as $date)
-                        @php($slots = $slotsByDate->get($date->toDateString(), collect()))
+                    @foreach ($calendarDaysInMonth as $date)
+                        @php($slots = $calendarSlotsByDate->get($date->toDateString(), collect()))
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <strong>{{ $date->format('D j M') }}</strong>
