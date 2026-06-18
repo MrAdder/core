@@ -147,7 +147,7 @@ jobs:
         run: php artisan serve -q &
 
       - name: Execute Tests
-        run: php artisan test --parallel --processes=4 --recreate-databases
+        run: php artisan test --parallel --display-notices --display-warnings --display-deprecations --processes=4 --recreate-databases
 
   trigger-deploy:
     name: Trigger Deploy

@@ -26,25 +26,28 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
+        // Convert ALL PHP notices/warnings/deprecations into exceptions
+        set_error_handler(function ($severity, $message, $file, $line) {
+            
+            if (!(error_reporting() & $severity)) {
+                return false;
+            }
+            throw new \ErrorException($message, 0, $severity, $file, $line);
+        });
         // Exclude Middleware Across All Tests
         $this->withoutMiddleware(VerifyCsrfToken::class);
-
-        // Add HTTP protocol
-        $parsed = parse_url(config('app.url'));
-        if (empty($parsed['scheme'])) {
-            config(['app.url' => 'http://'.config('app.url')]);
+        
+        $parsed = parse_url(config('app.url'));if (empty($parsed['scheme'])) {
+            config(['app.url' => 'http://' . config('app.url')]);
         }
-
+        
         $now = now()->setMicro(0);
         Carbon::setTestNow($now);
         $this->knownDate = $now;
-
         $this->seed();
-
-        // Force regeneration of permissions cache
-        $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-
+        $this->app->make(\Spatie\Permission\PermissionRegistrar::class)
+            ->forgetCachedPermissions();
+        
         \Illuminate\Support\Facades\Notification::fake();
     }
 
