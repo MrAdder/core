@@ -26,10 +26,9 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         set_error_handler(function ($severity, $message, $file, $line) {
             throw new \ErrorException($message, 0, $severity, $file, $line);
-        });
+        });        
         
         // Exclude Middleware Across All Tests
         $this->withoutMiddleware(VerifyCsrfToken::class);
