@@ -28,6 +28,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         // Convert ALL PHP notices/warnings/deprecations into exceptions
         set_error_handler(function ($severity, $message, $file, $line) {
+            
             if (!(error_reporting() & $severity)) {
                 return false;
             }
@@ -35,6 +36,7 @@ abstract class TestCase extends BaseTestCase
         });
         // Exclude Middleware Across All Tests
         $this->withoutMiddleware(VerifyCsrfToken::class);
+        
         $parsed = parse_url(config('app.url'));if (empty($parsed['scheme'])) {
             config(['app.url' => 'http://' . config('app.url')]);
         }
