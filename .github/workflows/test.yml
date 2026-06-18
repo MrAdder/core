@@ -146,14 +146,8 @@ jobs:
       - name: Serve Application
         run: php artisan serve -q &
 
-      - name: Create CTS database
-        run: php artisan cts:migrate:fresh
-
-      - name: Run migrations
-        run: php artisan migrate --force
-
       - name: Execute Tests
-        run: php artisan test --display-notices
+        run: php artisan test --parallel --display-notices --display-warnings --display-deprecations --processes=4 --recreate-databases
 
   trigger-deploy:
     name: Trigger Deploy
